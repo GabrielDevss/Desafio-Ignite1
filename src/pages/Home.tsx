@@ -1,21 +1,31 @@
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 
-import { Header } from '../components/Header';
 import { Task, TasksList } from '../components/TasksList';
 import { TodoInput } from '../components/TodoInput';
+import { Header } from '../components/Header';
+
+export type editTaskArgs = {
+  taskId: number,
+  taskNewTitlte: string,
+}
 
 export function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
 
   function handleAddTask(newTaskTitle: string) {
+    const taskWithSameTitle = tasks.find(task => task.title === newTaskTitle);
+    if (taskWithSameTitle) {
+      return Alert.alert('Task já cadastrada', 'Você não pode cadastrar uma task com o mesmo nome')
+    }
+
     const newTask = {
       id: new Date().getTime(),
       title: newTaskTitle,
       done: false,
     }
 
-      setTasks(oldTasks => [...oldTasks, newTask])
+    setTasks(oldTasks => [...oldTasks, newTask])
   }
 
   function handleToggleTaskDone(id: number) {
@@ -23,7 +33,7 @@ export function Home() {
 
     const itemFound = updatedTasks.find(item => item.id === id);
 
-    if(!itemFound) {
+    if (!itemFound) {
       return;
     }
 
@@ -33,9 +43,32 @@ export function Home() {
   }
 
   function handleRemoveTask(id: number) {
-    setTasks(oldTasks => oldTasks.filter(
-      task => task.id !== id
-    ));
+    Alert.alert('Remover item', 'Tem certeza que você deseja remover esse item?', [
+      {
+        style: 'cancel',
+        text: 'não'
+      },
+      {
+        onPress: () => {
+          setTasks(oldTasks => oldTasks.filter(
+            task => task.id !== id
+          ));
+        }
+      },
+    ])
+   
+  }
+
+  function handleEditTask({ taskId, taskNewTitlte }: editTaskArgs) {
+    const updatedTasks = tasks.map(task => ({ ...task }))
+    
+      const taskTobeUpdated = updatedTasks.find(item => item.id === taskId);
+
+      if(!taskTobeUpdated)
+      return;
+
+      taskTobeUpdated.title = taskNewTitlte ;
+      setTasks(updatedTasks);
   }
 
   return (
@@ -44,10 +77,11 @@ export function Home() {
 
       <TodoInput addTask={handleAddTask} />
 
-      <TasksList 
-        tasks={tasks} 
+      <TasksList
+        tasks={tasks}
         toggleTaskDone={handleToggleTaskDone}
-        removeTask={handleRemoveTask} 
+        removeTask={handleRemoveTask}
+        editTask={handleEditTask}
       />
     </View>
   )
